@@ -1,20 +1,19 @@
-peft @ git+https://github.com/huggingface/peft.git
-transformers @ git+https://github.com/huggingface/transformers.git
-bitsandbytes>=0.39.0
-accelerate
+peft @ git+git+https://github.com/huggingface/peft.git@032fff92fb74b737a2934e91a08d82142fb79dc3
+transformers @ git+https://github.com/huggingface/transformers.git@f4e4b4d0e2dc248433e808594f7595292037d891
+bitsandbytes==0.39.1
+accelerate==0.20.3
 addict
 fire
 PyYAML==6.0
-datasets
-accelerate>=0.19.0
+datasets==2.13.1
 sentencepiece
-wandb
+wandb==0.15.4
 einops
-xformers
+xformers==0.0.20
 optimum
 # qlora things
 bert-score==0.3.13
 evaluate==0.4.0
 rouge-score==0.1.2
-scipy
+scipy==1.11.1
 scikit-learn==1.2.2
