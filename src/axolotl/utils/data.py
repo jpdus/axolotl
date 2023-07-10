@@ -370,6 +370,14 @@ def load_prepare_datasets(
             dataset = Dataset.from_list(list(constant_len_dataset))
             logging.info(f"dataset len (packed): {len(dataset)})")
             # filter out bad data
+            for i in range(100):
+                logging.info(f"""{i}
+len input ids: {len(dataset[i]["input_ids"])}
+len attention mask: {len(dataset[i]["attention_mask"])}
+len labels: {len(dataset[i]["labels"])}
+
+""")
+            raise IndexError("stop")
             dataset = Dataset.from_list(
                 [
                     d
