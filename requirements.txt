@@ -1,6 +1,6 @@
 peft @ git+git+https://github.com/huggingface/peft.git@032fff92fb74b737a2934e91a08d82142fb79dc3
-transformers @ git+https://github.com/huggingface/transformers.git@f4e4b4d0e2dc248433e808594f7595292037d891
-bitsandbytes==0.39.1
+transformers @ git+https://github.com/huggingface/transformers.git@35eac0df75c692c5b93c12f7eaf3279cab8bd7ce
+bitsandbytes==0.40.0
 accelerate==0.20.3
 addict
 fire
