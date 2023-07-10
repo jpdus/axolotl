@@ -1,4 +1,4 @@
-peft @ git+git+https://github.com/huggingface/peft.git@032fff92fb74b737a2934e91a08d82142fb79dc3
+peft @ git+git+https://github.com/huggingface/peft.git@06fd06a4d2e8ed8c3a253c67d9c3cb23e0f497ad
 transformers @ git+https://github.com/huggingface/transformers.git@35eac0df75c692c5b93c12f7eaf3279cab8bd7ce
 bitsandbytes==0.40.0
 accelerate==0.20.3
