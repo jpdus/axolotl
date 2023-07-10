@@ -377,6 +377,9 @@ len attention mask: {len(dataset[i]["attention_mask"])}
 len labels: {len(dataset[i]["labels"])}
 
 """)
+            logging.info(f"cfg.max_packed_sequence_len: {cfg.max_packed_sequence_len}")
+            logging.info(f"max_packed_sequence_len: {max_packed_sequence_len}")
+            logging.info(f"cfg.sequence_len: {cfg.sequence_len}")
             raise IndexError("stop")
             dataset = Dataset.from_list(
                 [
