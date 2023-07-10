@@ -368,7 +368,7 @@ def load_prepare_datasets(
                 f"packing master dataset to len: {cfg.max_packed_sequence_len}"
             )
             dataset = Dataset.from_list(list(constant_len_dataset))
-
+            logging.info(f"dataset len (packed): {len(dataset)})")
             # filter out bad data
             dataset = Dataset.from_list(
                 [
@@ -380,6 +380,8 @@ def load_prepare_datasets(
                     and len(d["input_ids"]) == len(d["labels"])
                 ]
             )
+
+            logging.info(f"dataset len (packed): {len(dataset)})")
 
             if cfg.local_rank == 0:
                 logging.info(
