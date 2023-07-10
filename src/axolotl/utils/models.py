@@ -206,6 +206,9 @@ def load_model(
             from transformers import LlamaForCausalLM
 
             config = LlamaConfig.from_pretrained(base_model_config)
+            logging.info(base_model_config)
+            logging.info(config)
+            logging.info(model_kwargs)
             model = LlamaForCausalLM.from_pretrained(
                 base_model,
                 config=config,
