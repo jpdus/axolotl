@@ -368,7 +368,7 @@ def load_prepare_datasets(
                 f"packing master dataset to len: {cfg.max_packed_sequence_len}"
             )
             dataset = Dataset.from_list(list(constant_len_dataset))
-            logging.info(f"dataset len (packed): {len(dataset)})")
+            '''logging.info(f"dataset len (packed): {len(dataset)})")
             # filter out bad data
             for i in range(100):
                 logging.info(f"""{i}
@@ -380,12 +380,12 @@ len labels: {len(dataset[i]["labels"])}
             logging.info(f"cfg.max_packed_sequence_len: {cfg.max_packed_sequence_len}")
             logging.info(f"max_packed_sequence_len: {max_packed_sequence_len}")
             logging.info(f"cfg.sequence_len: {cfg.sequence_len}")
-            raise IndexError("stop")
+            raise IndexError("stop")'''
             dataset = Dataset.from_list(
                 [
                     d
                     for d in dataset
-                    if len(d["input_ids"]) < cfg.sequence_len
+                    if len(d["input_ids"]) <= cfg.sequence_len
                     and len(d["input_ids"]) > 0
                     and len(d["input_ids"]) == len(d["attention_mask"])
                     and len(d["input_ids"]) == len(d["labels"])
