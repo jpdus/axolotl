@@ -125,6 +125,10 @@ class LLama2ChatTokenizingStrategy(PromptTokenizingStrategy):
 
         if cur_len < self.sequence_len:
             if cur_len != total_len:
+                print(conversation_str)
+                print(total_len, cur_len)
+                print([len(turn) for turn in turns])
+                print(turns)
                 target[:] = IGNORE_TOKEN_ID
                 logging.warning(
                     f"WARNING: tokenization mismatch: {cur_len} vs. {total_len}."
