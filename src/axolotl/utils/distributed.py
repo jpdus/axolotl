@@ -11,7 +11,13 @@ accelerate = None  # pylint: disable=invalid-name
 
 def load_accelerate():
     global accelerate  # pylint: disable=global-statement
-    accelerate = Accelerator()
+    #https://github.com/huggingface/accelerate/blob/main/src/accelerate/accelerator.py
+    accelerate = Accelerator(
+        split_batches=True,
+        dispatch_batches=True
+        )
+    import logging
+    logging.warning(f'split_batches {accelerate.split_batches}')
 
 
 def is_distributed():
@@ -20,7 +26,12 @@ def is_distributed():
     """
     global accelerate  # pylint: disable=global-statement
     if not accelerate:
-        accelerate = Accelerator()
+        accelerate = Accelerator(
+            split_batches=True,
+            dispatch_batches=True
+        )
+        import logging
+        logging.warning(f'split_batches {accelerate.split_batches}')
     return dist.is_available() and dist.is_initialized()
 
 

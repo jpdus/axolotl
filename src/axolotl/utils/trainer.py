@@ -178,17 +178,24 @@ class AxolotlTrainer(Trainer):
         self, eval_dataset: Dataset
     ) -> Optional[torch.utils.data.Sampler]:
         if self.args.world_size > 1 and self.args.sample_packing:
-            return SequentialDistributedSampler(
+            #change sampler TODO
+            return DistributedSampler(
+            #return SequentialDistributedSampler(
                 eval_dataset,
                 num_replicas=self.args.world_size,
                 rank=self.args.process_index,
-                batch_size=self.args.per_device_eval_batch_size,
+                #batch_size=self.args.per_device_eval_batch_size,
             )
         return super()._get_eval_sampler(eval_dataset)
 
     def get_train_dataloader(self) -> Union[DataLoader, MultipackDistributedDataloader]:
         if self.args.sample_packing:
             train_sampler = self._get_train_sampler()
+            logging.warning(f'TEST Worldsize: {self.args.world_size}')
+
+            logging.warning(f'split_batches trainer {self.accelerator.split_batches}')
+            logging.warning(f'dispatch_batches trainer {self.accelerator.dispatch_batches}')
+            #train_loader=MultipackDistributedDataloader(
             return self.accelerator.prepare(
                 MultipackDistributedDataloader(
                     self.train_dataset,
@@ -200,13 +207,22 @@ class AxolotlTrainer(Trainer):
                     sample_packing_seq_len_multiplier=self.args.sample_packing_seq_len_multiplier,
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
                 ),
-                num_processes=self.args.world_size,
-                process_index=self.args.process_index,
-                put_on_device = False,
-                dispatch_batches = True,
-                even_batches = True,
-                slice_fn_for_dispatch = None,
+                #https://github.com/huggingface/accelerate/blob/main/src/accelerate/data_loader.py
             )
+            #return train_loader
+            from accelerate.data_loader import prepare_data_loader
+
+            return prepare_data_loader(
+                    dataloader=train_loader,
+                    device = None,
+                    num_processes = self.args.world_size,
+                    process_index = self.args.process_index,
+                    split_batches = True,
+                    put_on_device = False,
+                    rng_types = None,
+                    dispatch_batches = False,
+                    even_batches = False,)
+                    #slice_fn_for_dispatch = None)
         return super().get_train_dataloader()
 
     def get_eval_dataloader(
@@ -218,6 +234,8 @@ class AxolotlTrainer(Trainer):
             )
 
             eval_sampler = self._get_eval_sampler(eval_dataset)
+
+            #eval_loader=MultipackDistributedDataloader(
             return self.accelerator.prepare(
                 MultipackDistributedDataloader(
                     eval_dataset,
@@ -230,6 +248,19 @@ class AxolotlTrainer(Trainer):
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
                 )
             )
+            return eval_loader
+            from accelerate.data_loader import prepare_data_loader
+            return prepare_data_loader(
+                    dataloader=eval_loader,
+                    device = None,
+                    num_processes = self.args.world_size,
+                    process_index = self.args.process_index,
+                    split_batches = False,
+                    put_on_device = False,
+                    rng_types = None,
+                    dispatch_batches = False,
+                    even_batches = False,)
+                    #slice_fn_for_dispatch = None)
         return super().get_eval_dataloader(eval_dataset)
 
     def compute_loss(self, model, inputs, return_outputs=False):
@@ -449,8 +480,12 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
     training_arguments_kwargs["warmup_steps"] = warmup_steps
     training_arguments_kwargs["logging_steps"] = logging_steps
 
+    from accelerate.utils import set_seed
     if cfg.seed:
         training_arguments_kwargs["seed"] = cfg.seed
+        set_seed(cfg.seed)
+    else:
+        set_seed(42)
 
     if cfg.gradient_checkpointing:
         if cfg.gptq:
