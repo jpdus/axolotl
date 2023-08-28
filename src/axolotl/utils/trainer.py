@@ -372,7 +372,7 @@ def calculate_total_num_steps(cfg, train_dataset, tokenizer):
                 collate_fn=DataCollatorForSeq2Seq(
                     tokenizer,
                     return_tensors="pt",
-                    padding="longest",
+                    padding="max_length",
                 ),
                 sampler=sampler,
                 packing_efficiency_estimate=cfg.sample_packing_eff_est,
