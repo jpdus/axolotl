@@ -199,7 +199,13 @@ class AxolotlTrainer(Trainer):
                     packing_efficiency_estimate=self.args.sample_packing_efficiency,
                     sample_packing_seq_len_multiplier=self.args.sample_packing_seq_len_multiplier,
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
-                )
+                ),
+                num_processes=self.args.world_size,
+                process_index=self.args.process_index,
+                put_on_device = False,
+                dispatch_batches = True,
+                even_batches = True,
+                slice_fn_for_dispatch = None,
             )
         return super().get_train_dataloader()
 
