@@ -45,7 +45,12 @@ def normalize_config(cfg):
     cfg.batch_size = (
         cfg.batch_size or cfg.micro_batch_size * cfg.gradient_accumulation_steps
     )
-    cfg.world_size = int(os.environ.get("WORLD_SIZE", 1))
+    cfg.world_size = int(os.environ.get("WORLD_SIZE", -1))
+    if cfg.world_size==-1:
+        if cfg.device != "mps":
+            cfg.world_size=torch.cuda.device_count()
+        else:
+            cfg.world_size = 1
     cfg.local_rank = int(os.environ.get("LOCAL_RANK", 0))
     choose_device(cfg)
     cfg.ddp = cfg.ddp if cfg.ddp is not None else cfg.world_size != 1
