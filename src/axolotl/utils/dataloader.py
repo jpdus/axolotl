@@ -168,14 +168,14 @@ class MultipackDistributedDataloader:
         self.batch_max_length = batch_size * seq_max_length
         self.collate_fn = collate_fn
 
-        #self.num_replicas = 1
-        self.num_replicas = device_count
-        if hasattr(self.sampler, "rank"):
-            self.rank=self.sampler.rank
-        else:
-            self.rank=0
-        #self.rank = 0
-
+        self.num_replicas = 1
+        self.rank = 0
+        #self.num_replicas = device_count
+        #if hasattr(self.sampler, "rank"):
+        #    self.rank=self.sampler.rank
+        #else:
+        #    self.rank=0
+        
         # statistics
         self.eff_total_used = 0
         self.eff_total_slots = 0
@@ -216,9 +216,8 @@ class MultipackDistributedDataloader:
     def __iter__(self):
         if hasattr(self.sampler, "set_epoch"):
             LOG.info(f"Before setting epoch")
-            from accelerate import Accelerator
-            #accelerator = Accelerator()
-            #with accelerator.main_process_first():
+            from axolotl.utils.distributed import barrier
+            barrier()
             new_epoch = self.sampler.epoch + 1
             self.sampler.set_epoch(new_epoch)
             LOG.info(f"calling sampler.set_epoch({new_epoch})")
@@ -251,14 +250,14 @@ class MultipackDistributedDataloader:
                         ]
                         concatenated[feature] = np.concatenate(arrays)
                 chunked_data.append(concatenated)
-            LOG.info(f'yielding chunked data, len remaining: {len_remaining}')
+            #LOG.info(f'yielding chunked data, len remaining: {len_remaining}')
             yield self.collate_fn(chunked_data)
             len_remaining -= 1
             if not len_remaining:
                 return
         # yield a no-op for cases where we don't have any data left to pack
         for i in range(0, len_remaining):
-            LOG.info(f'collating no-ops: {len_remaining}')
+            #LOG.info(f'collating no-ops: {len_remaining}')
             yield self.collate_fn(
                 [
                     {

@@ -167,6 +167,7 @@ class AxolotlTrainer(Trainer):
     def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
         if self.args.world_size > 1 and self.args.sample_packing:
             return DistributedSampler(
+            #return SequentialDistributedSampler(
                 self.train_dataset,
                 num_replicas=self.args.world_size,
                 rank=self.args.process_index,
@@ -178,13 +179,11 @@ class AxolotlTrainer(Trainer):
         self, eval_dataset: Dataset
     ) -> Optional[torch.utils.data.Sampler]:
         if self.args.world_size > 1 and self.args.sample_packing:
-            #change sampler TODO
-            return DistributedSampler(
-            #return SequentialDistributedSampler(
+            return SequentialDistributedSampler(
                 eval_dataset,
                 num_replicas=self.args.world_size,
                 rank=self.args.process_index,
-                #batch_size=self.args.per_device_eval_batch_size,
+                batch_size=self.args.per_device_eval_batch_size,
             )
         return super()._get_eval_sampler(eval_dataset)
 
@@ -206,7 +205,7 @@ class AxolotlTrainer(Trainer):
                     packing_efficiency_estimate=self.args.sample_packing_efficiency,
                     sample_packing_seq_len_multiplier=self.args.sample_packing_seq_len_multiplier,
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
-                ),
+                )
                 #https://github.com/huggingface/accelerate/blob/main/src/accelerate/data_loader.py
             )
             #return train_loader
@@ -634,6 +633,13 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
         # A100 is best at 64, while others at 8. Let's use the larger so we don't have to check
         # https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html
         data_collator_kwargs["pad_to_multiple_of"] = 64
+
+    
+    #data_collator_kwargs = {
+    #    "padding": 'max_length',
+    #    "max_length": cfg.sequence_len,
+    #}
+    #logging.warning(f"Data_collator_kwargs: #{data_collator_kwargs}")
 
     if cfg.is_llama_derived_model and cfg.landmark_attention:
         from axolotl.monkeypatch.llama_landmark_attn import (
