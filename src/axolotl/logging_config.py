@@ -57,22 +57,22 @@ DEFAULT_LOGGING_CONFIG: Dict[str, Any] = {
     "loggers": {
         "axolotl": {
             "handlers": ["color_console"],
-            "level": "DEBUG",
+            "level": os.getenv("LOG_LEVEL", "INFO"),
             "propagate": False,
         },
         "transformers": {
             "handlers": ["color_console"],
-            "level": "DEBUG",
+            "level": os.getenv("LOG_LEVEL", "WARNING"),
             "propagate": False,
         },
         "accelerate": {
             "handlers": ["color_console"],
-            "level": "DEBUG",
+            "level": os.getenv("LOG_LEVEL", "WARNING"),
             "propagate": False,
         },
         "torch": {
             "handlers": ["color_console"],
-            "level": "DEBUG",
+            "level": os.getenv("LOG_LEVEL", "WARNING"),
             "propagate": False,
         },
     },

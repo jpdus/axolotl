@@ -272,6 +272,62 @@ class AxolotlTrainer(Trainer):
         #     loss = trainer_weighted_loss(outputs, labels, shift_labels=True)
         #     return (loss, outputs) if return_outputs else loss
         return super().compute_loss(model, inputs, return_outputs=return_outputs)
+    
+    def create_accelerator_and_postprocess(self):
+        from accelerate import Accelerator, DistributedDataParallelKwargs
+        from accelerate.utils.dataclasses import GradientAccumulationPlugin
+        #super().create_accelerator_and_postprocess()
+
+        #https://pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html
+        ddp_handler = DistributedDataParallelKwargs(
+            broadcast_buffers=True,
+            bucket_cap_mb=250, #500,
+            gradient_as_bucket_view=True,
+            static_graph=False
+        )
+
+        grad_acc_kwargs = {"num_steps": self.args.gradient_accumulation_steps}
+        grad_acc_kwargs["sync_with_dataloader"] = False
+        gradient_accumulation_plugin = GradientAccumulationPlugin(**grad_acc_kwargs)
+        deepspeed_plugin=self.args.deepspeed_plugin
+
+        self.accelerator = Accelerator(
+            device_placement = True,
+            split_batches = False,
+            #gradient_accumulation_steps = cfg.gradient_accumulation_steps,
+            gradient_accumulation_plugin = gradient_accumulation_plugin,
+            dispatch_batches = None,
+            even_batches = True,
+            kwargs_handlers=[ddp_handler],
+            deepspeed_plugin=deepspeed_plugin,
+            )
+        LOG.warning('custom Accelerator initalized: {self.accelerator}')
+        LOG.warning(f'ddp_handler: {ddp_handler}')
+        LOG.warning(f'split_batches: {self.accelerator.split_batches}')
+        LOG.warning(f'dispatch_batches: {self.accelerator.dispatch_batches}')
+        LOG.warning(f'even_batches: {self.accelerator.even_batches}')
+        # deepspeed and accelerate flags covering both trainer args and accelerate launcher
+        self.is_deepspeed_enabled = getattr(self.accelerator.state, "deepspeed_plugin", None) is not None
+        self.is_fsdp_enabled = getattr(self.accelerator.state, "fsdp_plugin", None) is not None
+
+        # post accelerator creation setup
+        if self.is_fsdp_enabled:
+            fsdp_plugin = self.accelerator.state.fsdp_plugin
+            fsdp_plugin.limit_all_gathers = self.args.fsdp_config.get(
+                "limit_all_gathers", fsdp_plugin.limit_all_gathers
+            )
+            fsdp_plugin.use_orig_params = self.args.fsdp_config.get("use_orig_params", fsdp_plugin.use_orig_params)
+
+        if self.is_deepspeed_enabled:
+            if getattr(self.args, "hf_deepspeed_config", None) is None:
+                from transformers.deepspeed import HfTrainerDeepSpeedConfig
+
+                ds_plugin = self.accelerator.state.deepspeed_plugin
+
+                ds_plugin.hf_ds_config = HfTrainerDeepSpeedConfig(ds_plugin.hf_ds_config.config)
+                ds_plugin.deepspeed_config = ds_plugin.hf_ds_config.config
+                ds_plugin.hf_ds_config.trainer_config_process(self.args)
+
 
 
 class OneCycleLRSchedulerTrainer(AxolotlTrainer):
@@ -703,6 +759,45 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
             LOG.warning(f"Step End: {state}")
             return control
     callbacks.append(DebugCallback())
+
+    from accelerate import Accelerator, DistributedDataParallelKwargs
+    from accelerate.utils.dataclasses import GradientAccumulationPlugin
+    class AcceleratorCallback(TrainerCallback):
+        def on_init_end(
+            self,
+            args: TrainingArguments,
+            state: TrainerState,
+            control: TrainerControl,
+            **kwargs,
+        ):
+            #https://pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html
+            ddp_handler = DistributedDataParallelKwargs(
+                broadcast_buffers=True,
+                bucket_cap_mb=25,
+                gradient_as_bucket_view=False,
+                static_graph=False
+            )
+
+            grad_acc_kwargs = {"num_steps": args.gradient_accumulation_steps}
+            grad_acc_kwargs["sync_with_dataloader"] = False
+            gradient_accumulation_plugin = GradientAccumulationPlugin(**grad_acc_kwargs)
+            deepspeed_plugin=args.deepspeed_plugin
+
+            accelerator = Accelerator(
+                device_placement = True,
+                split_batches = False,
+                gradient_accumulation_steps = cfg.gradient_accumulation_steps,
+                gradient_accumulation_plugin = gradient_accumulation_plugin,
+                dispatch_batches = None,
+                even_batches = True,
+                kwargs_handlers=[ddp_handler],
+                deepspeed_plugin=deepspeed_plugin,
+                )
+            LOG.warning(f"Accelerator created; {state}")
+            return control
+
+        
+
 
 
     if cfg.is_llama_derived_model and cfg.landmark_attention:

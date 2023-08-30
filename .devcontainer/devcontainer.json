@@ -1,16 +1,17 @@
 {
     "name": "Python 3 Cuda Pytorch",
     "image": "aitrain:cu121",
+    "postCreateCommand": "pip install --no-deps -e .",
     "runArgs": [
         "--gpus=all",
         "--ipc=host",
-        "--ulimit memlock=-1",
-        "--ulimit stack=67108864"
+        "--ulimit=memlock=-1",
+        "--ulimit=stack=67108864"
         //"--shm-size=4gb"
     ],
     "mounts": [
-        "source=${env:HOME}/.cache/huggingface, target=/root/.cache/huggingface,tybe=bind",
-        "source=${env:HOME}/dev2/finetune_german, target=/workspace/finetune_german,tybe=bind"
+        "source=${env:HOME}/.cache/huggingface,target=/root/.cache/huggingface,type=bind",
+        "source=${env:HOME}/dev2/finetune_german,target=/workspace/finetune_german,type=bind"
         //"source=${env:HOME}/.bashrc,target=/root/.basrc,type=bind"
         //see https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount
     ],
@@ -19,9 +20,7 @@
         "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
         "HUGGING_FACE_HUB_TOKEN": "${localEnv:HUGGING_FACE_HUB_TOKEN}",
         "WANDB_API_KEY": "${localEnv:WANDB_API_KEY}",
-        "PYTHONUNBUFFERED": "1",
-        "ACCELERATE_DEBUG_MODE": "1",
-        "TRANSFORMERS_VERBOSITY": "debug"
+        "PYTHONUNBUFFERED": "1"
     },
     "customizations": {
         "vscode": {
