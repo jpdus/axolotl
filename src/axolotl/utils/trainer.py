@@ -286,6 +286,8 @@ class AxolotlTrainer(Trainer):
             static_graph=False
         )
 
+        #ARGUMENTE WERDEN NICHT DURCHGÄNGI ÜBERNOMMEN, WARUM?
+
         grad_acc_kwargs = {"num_steps": self.args.gradient_accumulation_steps}
         grad_acc_kwargs["sync_with_dataloader"] = False
         gradient_accumulation_plugin = GradientAccumulationPlugin(**grad_acc_kwargs)
