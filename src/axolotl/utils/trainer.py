@@ -195,8 +195,8 @@ class AxolotlTrainer(Trainer):
             logging.warning(f'split_batches trainer {self.accelerator.split_batches}')
             logging.warning(f'dispatch_batches trainer {self.accelerator.dispatch_batches}')
             #train_loader=MultipackDistributedDataloader(
-            return self.accelerator.prepare(
-                MultipackDistributedDataloader(
+            #return self.accelerator.prepare(
+            return MultipackDistributedDataloader(
                     self.train_dataset,
                     batch_size=self._train_batch_size,
                     seq_max_length=self.args.max_seq_length,
@@ -205,9 +205,10 @@ class AxolotlTrainer(Trainer):
                     packing_efficiency_estimate=self.args.sample_packing_efficiency,
                     sample_packing_seq_len_multiplier=self.args.sample_packing_seq_len_multiplier,
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
+                    accelerator=self.accelerator,
                 )
                 #https://github.com/huggingface/accelerate/blob/main/src/accelerate/data_loader.py
-            )
+            #)
             #return train_loader
             from accelerate.data_loader import prepare_data_loader
 
@@ -235,8 +236,8 @@ class AxolotlTrainer(Trainer):
             eval_sampler = self._get_eval_sampler(eval_dataset)
 
             #eval_loader=MultipackDistributedDataloader(
-            return self.accelerator.prepare(
-                MultipackDistributedDataloader(
+            #return self.accelerator.prepare(
+            return MultipackDistributedDataloader(
                     eval_dataset,
                     batch_size=self.args.eval_batch_size,
                     seq_max_length=self.args.max_seq_length,
@@ -245,8 +246,9 @@ class AxolotlTrainer(Trainer):
                     packing_efficiency_estimate=self.args.sample_packing_efficiency,
                     sample_packing_seq_len_multiplier=self.args.eval_batch_size,
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
+                    accelerator=self.accelerator,
                 )
-            )
+            #)
             return eval_loader
             from accelerate.data_loader import prepare_data_loader
             return prepare_data_loader(
@@ -592,6 +594,7 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
         sample_packing_seq_len_multiplier=cfg.micro_batch_size,
         relora_steps=cfg.relora_steps,
         relora_warmup_steps=cfg.relora_warmup_steps,
+        #dispatch_batches=True,
         **training_arguments_kwargs,
     )
 
@@ -640,6 +643,67 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
     #    "max_length": cfg.sequence_len,
     #}
     #logging.warning(f"Data_collator_kwargs: #{data_collator_kwargs}")
+
+    import logging
+    import os
+    from transformers import (
+        TrainerCallback,
+        TrainerControl,
+        TrainerState,
+        TrainingArguments,
+    )
+
+    LOG = logging.getLogger("debug.callbacks")
+
+
+    class DebugCallback(TrainerCallback):  # pylint: disable=too-few-public-methods
+        """Callback to save the PEFT adapter"""
+
+        def on_epoch_begin(
+            self,
+            args: TrainingArguments,
+            state: TrainerState,
+            control: TrainerControl,
+            **kwargs,
+        ):
+            
+            LOG.warning(f"Epoch Begin: {state}")
+            return control
+        
+        def on_epoch_end(
+            self,
+            args: TrainingArguments,
+            state: TrainerState,
+            control: TrainerControl,
+            **kwargs,
+        ):
+            
+            LOG.warning(f"Epoch End: {state}")
+            return control
+        
+        def on_step_begin(
+            self,
+            args: TrainingArguments,
+            state: TrainerState,
+            control: TrainerControl,
+            **kwargs,
+        ):
+            
+            LOG.warning(f"Step Begin: {state}")
+            return control
+        
+        def on_step_end(
+            self,
+            args: TrainingArguments,
+            state: TrainerState,
+            control: TrainerControl,
+            **kwargs,
+        ):
+            
+            LOG.warning(f"Step End: {state}")
+            return control
+    callbacks.append(DebugCallback())
+
 
     if cfg.is_llama_derived_model and cfg.landmark_attention:
         from axolotl.monkeypatch.llama_landmark_attn import (

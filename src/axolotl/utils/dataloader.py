@@ -149,6 +149,7 @@ class MultipackDistributedDataloader:
         packing_efficiency_estimate: float = 1.0,
         sample_packing_seq_len_multiplier: int = 1,
         device_count: int = 1,
+        accelerator=None
     ):
         # Dataset
         self.dataset = dataset
@@ -182,16 +183,19 @@ class MultipackDistributedDataloader:
         self.packing_efficiency_estimate = packing_efficiency_estimate or 1.0
         self.device_count = device_count
 
+        self.accelerator = accelerator
+
     def generate_batches(self, set_stats=False):
-        LOG.info("generating packed batches")
+        LOG.info(f"generating packed batches, set_stats {set_stats}")
         if self.sampler:
             indices = [idx for idx in self.sampler]
         else:
             indices = range(0, len(self.dataset))
 
-        LOG.info(hash_indices(indices))
+        #LOG.info(hash_indices(indices))
         lengths = self.lengths[indices]
         lengths_cumsum = np.cumsum(lengths)
+        LOG.info(f"len indices: f{len(lengths)} / batch length total: {lengths_cumsum[-1]}")
 
         batches, totseqs, total_used, total_slots = allocate(
             lengths=lengths,
@@ -206,8 +210,8 @@ class MultipackDistributedDataloader:
 
         # statistics
         if set_stats:
-            LOG.warning(f'total_used: {total_used}')
-            LOG.warning(f'total_slots: {total_slots}')
+            LOG.warning(f'total_used: {total_used} / total_slots: {total_slots}')
+            LOG.warning(f'Times seq len: {total_slots/self.seq_max_length}')
             self.eff_total_used += total_used
             self.eff_total_slots += total_slots
 
@@ -216,15 +220,21 @@ class MultipackDistributedDataloader:
     def __iter__(self):
         if hasattr(self.sampler, "set_epoch"):
             LOG.info(f"Before setting epoch")
-            from axolotl.utils.distributed import barrier
-            barrier()
+            #from axolotl.utils.distributed import barrier
+            #barrier()
             new_epoch = self.sampler.epoch + 1
-            self.sampler.set_epoch(new_epoch)
+            with self.accelerator.main_process_first():
+                self.sampler.set_epoch(new_epoch)
             LOG.info(f"calling sampler.set_epoch({new_epoch})")
-        all_batches, _ = self.generate_batches(set_stats=True)
+        if self.accelerator is not None:
+            with self.accelerator.main_process_first():
+                all_batches, _ = self.generate_batches(set_stats=True)
+        else:
+            all_batches, _ = self.generate_batches(set_stats=True)
         features = self.dataset.features.keys()
         len_remaining = self._len_est()
-        LOG.warning(f'total_remaining: {len_remaining}')
+        LOG.info(f'total_remaining: {len_remaining}')
+        LOG.info(f'chunk length: {self.batch_size // self.sample_packing_seq_len_multiplier}')
         for batches in chunk(
             all_batches, self.batch_size // self.sample_packing_seq_len_multiplier
         ):
@@ -250,12 +260,17 @@ class MultipackDistributedDataloader:
                         ]
                         concatenated[feature] = np.concatenate(arrays)
                 chunked_data.append(concatenated)
-            #LOG.info(f'yielding chunked data, len remaining: {len_remaining}')
-            yield self.collate_fn(chunked_data)
+            LOG.info(f'yielding chunked data, len chunked: {chunked_data[0]["input_ids"][0]}')
+            collated= self.collate_fn(chunked_data)
+            LOG.info(f'Padded inputs, len chunked: {len(collated["input_ids"])}')
+            yield collated
+            LOG.info(f'Yielded to Trainer, len_remaining: {len_remaining}')
             len_remaining -= 1
             if not len_remaining:
+                LOG.info(f'returning the iterator, len reached')
                 return
         # yield a no-op for cases where we don't have any data left to pack
+        LOG.info(f'Not at end, yielding no-ops, len remaining: {len_remaining}')
         for i in range(0, len_remaining):
             #LOG.info(f'collating no-ops: {len_remaining}')
             yield self.collate_fn(
@@ -272,22 +287,22 @@ class MultipackDistributedDataloader:
     def _len_est(self):
         lengths_sum = np.sum(self.lengths)
         lengths_sum_per_device = lengths_sum // self.device_count
-        LOG.info(
-            f"packing_efficiency_estimate: {self.packing_efficiency_estimate} "
-            f"total_num_tokens per device: {lengths_sum_per_device}"
-        )
-
-        # shave off 1% + 1 for dealing with variance in packing from random sampler to sampler
-        return (
-            math.floor(
+        len_estimate=math.floor(
                 0.99
                 * lengths_sum_per_device
                 / self.packing_efficiency_estimate
                 // self.seq_max_length
                 // self.batch_size
-            )
-            - 1
+            ) - 1
+
+        LOG.info(
+            f"packing_efficiency_estimate: {self.packing_efficiency_estimate} "
+            f"total_num_tokens per device: {lengths_sum_per_device} "
+            f"len estimate: {len_estimate}"
         )
+
+        # shave off 1% + 1 for dealing with variance in packing from random sampler to sampler
+        return len_estimate
 
     def __len__(self):
         # this doesn't return the actual length b/c with distributed samplers, not all dataloaders get

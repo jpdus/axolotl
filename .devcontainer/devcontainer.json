@@ -1,0 +1,48 @@
+{
+    "name": "Python 3 Cuda Pytorch",
+    "image": "aitrain:cu121",
+    "runArgs": [
+        "--gpus=all",
+        "--ipc=host",
+        "--ulimit memlock=-1",
+        "--ulimit stack=67108864"
+        //"--shm-size=4gb"
+    ],
+    "mounts": [
+        "source=${env:HOME}/.cache/huggingface, target=/root/.cache/huggingface,tybe=bind",
+        "source=${env:HOME}/dev2/finetune_german, target=/workspace/finetune_german,tybe=bind"
+        //"source=${env:HOME}/.bashrc,target=/root/.basrc,type=bind"
+        //see https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount
+    ],
+    "containerEnv": {
+        "OPENAI_API_KEY": "${localEnv:OPENAI_API_KEY}",
+        "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
+        "HUGGING_FACE_HUB_TOKEN": "${localEnv:HUGGING_FACE_HUB_TOKEN}",
+        "WANDB_API_KEY": "${localEnv:WANDB_API_KEY}",
+        "PYTHONUNBUFFERED": "1",
+        "ACCELERATE_DEBUG_MODE": "1",
+        "TRANSFORMERS_VERBOSITY": "debug"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "files.autoSave": "afterDelay",
+                "python.dataScience.enabled": true,
+                "python.dataScience.alwaysTrustNotebooks": true,
+                "python.defaultInterpreterPath": "/root/miniconda3/envs/py3.10/bin/python",
+                "python.languageServer": "Pylance"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "ms-toolsai.jupyter-renderers",
+                "visualstudioexptteam.vscodeintellicode",
+                "github.copilot",
+            ]
+        }
+    }
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // "forwardPorts": [],
+}
