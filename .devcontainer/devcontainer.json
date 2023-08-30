@@ -4,13 +4,13 @@
     "runArgs": [
         "--gpus=all",
         "--ipc=host",
-        "--ulimit memlock=-1",
-        "--ulimit stack=67108864"
+        "--ulimit=memlock=-1",
+        "--ulimit=stack=67108864"
         //"--shm-size=4gb"
     ],
     "mounts": [
-        "source=${env:HOME}/.cache/huggingface, target=/root/.cache/huggingface,tybe=bind",
-        "source=${env:HOME}/dev2/finetune_german, target=/workspace/finetune_german,tybe=bind"
+        "source=${env:HOME}/.cache/huggingface,target=/root/.cache/huggingface,type=bind",
+        "source=${env:HOME}/dev2/finetune_german,target=/workspace/finetune_german,type=bind"
         //"source=${env:HOME}/.bashrc,target=/root/.basrc,type=bind"
         //see https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount
     ],

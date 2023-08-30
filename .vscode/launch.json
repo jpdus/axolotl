@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train",
+            "type": "python",
+            "request": "launch",
+            "args": ["--multi_gpu",
+                     "--mixed_precision=bf16",
+                    "scripts/finetune.py",
+                    "/workspace/finetune_german/axolotl_server/german_law_test_230822/lora_2gpu_hanging_bug.yml",
+                    "--base_model_ignore_patterns='*.safetensors'"],
+            "module": "accelerate.commands.launch",
+            "console": "integratedTerminal",
+            //"justMyCode": true
+        }
+    ]
+}
