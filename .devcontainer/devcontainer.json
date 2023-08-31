@@ -1,7 +1,7 @@
 {
     "name": "Python 3 Cuda Pytorch",
-    "image": "aitrain:cu121",
-    "postCreateCommand": "pip install --no-deps -e .",
+    "image": "aitrain-dev:latest",
+    "postCreateCommand": "pip install --no-deps -e . && pip3 install -r requirements-dev.txt",
     "runArgs": [
         "--gpus=all",
         "--ipc=host",
