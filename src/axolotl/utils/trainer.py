@@ -273,7 +273,7 @@ class AxolotlTrainer(Trainer):
         #     return (loss, outputs) if return_outputs else loss
         return super().compute_loss(model, inputs, return_outputs=return_outputs)
     
-    def create_accelerator_and_postprocess(self):
+    """def create_accelerator_and_postprocess(self):
         from accelerate import Accelerator, DistributedDataParallelKwargs
         from accelerate.utils.dataclasses import GradientAccumulationPlugin
         #super().create_accelerator_and_postprocess()
@@ -328,7 +328,7 @@ class AxolotlTrainer(Trainer):
 
                 ds_plugin.hf_ds_config = HfTrainerDeepSpeedConfig(ds_plugin.hf_ds_config.config)
                 ds_plugin.deepspeed_config = ds_plugin.hf_ds_config.config
-                ds_plugin.hf_ds_config.trainer_config_process(self.args)
+                ds_plugin.hf_ds_config.trainer_config_process(self.args)"""
 
 
 
@@ -617,6 +617,15 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
             "steps" if cfg.save_steps else "epoch"
         )
 
+    #dispatch batches
+    #sharded_ddp?
+    training_arguments_kwargs["ddp_backend"]="nccl"
+    training_arguments_kwargs["ddp_bucket_cap_mb"]=250 #0 #250
+    training_arguments_kwargs["ddp_broadcast_buffers"]=False #ddp_timeout
+    training_arguments_kwargs["ddp_timeout"]=50
+    training_arguments_kwargs["gradient_as_bucket_view"]=50
+    training_arguments_kwargs["static_graph"]=50
+
     training_args = AxolotlTrainingArguments(  # pylint: disable=unexpected-keyword-arg
         max_steps=total_num_steps if cfg.max_steps else -1,
         max_seq_length=cfg.sequence_len,
@@ -819,6 +828,10 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
                 batched=False,
                 num_proc=32,
             )
+
+    #dispatch_batches=True,
+    #trainer_kwargs["ddp_bucket_cap_mb"]=250
+    #trainer_kwargs["broadcast_buffers"]=True
 
     trainer_cls = AxolotlTrainer
     if cfg.lr_scheduler == "one_cycle" and (cfg.fsdp or cfg.adapter == "qlora"):
