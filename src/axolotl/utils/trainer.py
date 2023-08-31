@@ -166,6 +166,7 @@ class AxolotlTrainer(Trainer):
 
     def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
         if self.args.world_size > 1 and self.args.sample_packing:
+            #TRY with LOOP
             return DistributedSampler(
             #return SequentialDistributedSampler(
                 self.train_dataset,
@@ -179,11 +180,12 @@ class AxolotlTrainer(Trainer):
         self, eval_dataset: Dataset
     ) -> Optional[torch.utils.data.Sampler]:
         if self.args.world_size > 1 and self.args.sample_packing:
-            return SequentialDistributedSampler(
+            return DistributedSampler(
                 eval_dataset,
                 num_replicas=self.args.world_size,
                 rank=self.args.process_index,
-                batch_size=self.args.per_device_eval_batch_size,
+                shuffle=False
+                #batch_size=self.args.per_device_eval_batch_size,
             )
         return super()._get_eval_sampler(eval_dataset)
 
@@ -622,9 +624,9 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
     training_arguments_kwargs["ddp_backend"]="nccl"
     training_arguments_kwargs["ddp_bucket_cap_mb"]=250 #0 #250
     training_arguments_kwargs["ddp_broadcast_buffers"]=False #ddp_timeout
-    training_arguments_kwargs["ddp_timeout"]=50
-    training_arguments_kwargs["gradient_as_bucket_view"]=50
-    training_arguments_kwargs["static_graph"]=50
+    training_arguments_kwargs["ddp_timeout"]=60
+    training_arguments_kwargs["gradient_as_bucket_view"]=False
+    training_arguments_kwargs["static_graph"]=False
 
     training_args = AxolotlTrainingArguments(  # pylint: disable=unexpected-keyword-arg
         max_steps=total_num_steps if cfg.max_steps else -1,
@@ -769,7 +771,7 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
             
             LOG.warning(f"Step End: {state}")
             return control
-    callbacks.append(DebugCallback())
+    #callbacks.append(DebugCallback())
 
     from accelerate import Accelerator, DistributedDataParallelKwargs
     from accelerate.utils.dataclasses import GradientAccumulationPlugin

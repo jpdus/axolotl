@@ -21,9 +21,9 @@
                 "PYTHONUNBUFFERED": "1",
                 //"ACCELERATE_DEBUG_MODE": "1",
                 //"TRANSFORMERS_VERBOSITY": "debug",
-                "CUDA_LAUNCH_BLOCKING" : "1",
+                //"CUDA_LAUNCH_BLOCKING" : "1",
                 "LOG_LEVEL": "WARNING",
-                "NCCL_BUFFSIZE": "536870912"
+                //"NCCL_BUFFSIZE": "536870912"
             },
         }
     ]
