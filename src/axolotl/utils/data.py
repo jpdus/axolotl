@@ -58,6 +58,9 @@ def prepare_dataset(cfg, tokenizer):
             train_dataset, eval_dataset = load_prepare_datasets(
                 tokenizer, cfg, DEFAULT_DATASET_PREPARED_PATH
             )
+            train_dataset, eval_dataset = process_datasets_for_packing(
+                cfg, train_dataset, eval_dataset
+            )
     else:
         train_dataset = load_pretraining_dataset(
             cfg.pretraining_dataset,
@@ -69,10 +72,6 @@ def prepare_dataset(cfg, tokenizer):
         train_dataset = train_dataset.with_format("torch")
         eval_dataset = None
 
-    with zero_first(is_main_process()):
-        train_dataset, eval_dataset = process_datasets_for_packing(
-            cfg, train_dataset, eval_dataset
-        )
     if cfg.max_steps:
         total_num_steps = min(
             calculate_total_num_steps(cfg, train_dataset, tokenizer), cfg.max_steps
