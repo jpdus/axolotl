@@ -71,7 +71,7 @@ def prepare_dataset(cfg, tokenizer):
         # https://discuss.huggingface.co/t/how-to-use-huggingface-trainer-streaming-datasets-without-wrapping-it-with-torchdatas-iterablewrapper/25230
         train_dataset = train_dataset.with_format("torch")
         eval_dataset = None
-        return train_dataset, eval_dataset, -1
+        return train_dataset, eval_dataset, cfg.max_steps
 
     if cfg.max_steps:
         total_num_steps = min(
