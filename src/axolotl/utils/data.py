@@ -636,5 +636,11 @@ def load_pretraining_dataset(path, tokenizer, max_tokens=2048, seed=42):
     dataset = load_dataset(path, streaming=True, split="train")
     dataset = dataset.shuffle(seed=seed, buffer_size=10_000)
     # TODO dynamically figure out which columns/features to remove
-    dataset = dataset.map(encode, batched=True, remove_columns=["text", "meta"])
+    dataset = dataset.map(
+        encode,
+        batched=True,
+        remove_columns=[
+            "text",
+        ],
+    )  # "meta"
     return dataset
