@@ -238,7 +238,8 @@ class AxolotlTrainer(Trainer):
 
         # return super().get_train_dataloader()
         dataloader = super().get_train_dataloader()
-        return skip_first_batches(dataloader, 12000)
+        # 22k fuer 2750er checkpoint
+        return skip_first_batches(dataloader, 22000)
 
     def get_eval_dataloader(
         self, eval_dataset: Optional[Dataset] = None
