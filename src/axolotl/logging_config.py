@@ -60,6 +60,11 @@ DEFAULT_LOGGING_CONFIG: Dict[str, Any] = {
             "level": "DEBUG",
             "propagate": False,
         },
+        "transformers": {
+            "handlers": ["color_console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
     },
 }
 

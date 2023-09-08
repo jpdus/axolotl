@@ -233,7 +233,12 @@ class AxolotlTrainer(Trainer):
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
                 )
             )
-        return super().get_train_dataloader()
+        LOG.warning("SKIPPING 12.000 STEPS, REMOVE THIS")
+        from accelerate import skip_first_batches
+
+        # return super().get_train_dataloader()
+        dataloader = super().get_train_dataloader()
+        return skip_first_batches(dataloader, 12000)
 
     def get_eval_dataloader(
         self, eval_dataset: Optional[Dataset] = None
@@ -597,6 +602,11 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
         training_arguments_kwargs["ddp_bucket_cap_mb"] = cfg.ddp_bucket_cap_mb
     if cfg.ddp_broadcast_buffers is not None:
         training_arguments_kwargs["ddp_broadcast_buffers"] = cfg.ddp_broadcast_buffers
+
+    training_arguments_kwargs["dataloader_num_workers"] = 16
+    logging.warning(
+        f"UPDATE CONFIG WITH: `dataloader_num_workers: {training_arguments_kwargs['dataloader_num_workers']}`"
+    )
 
     training_args = AxolotlTrainingArguments(  # pylint: disable=unexpected-keyword-arg
         max_steps=total_num_steps if cfg.max_steps else -1,
