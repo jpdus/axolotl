@@ -233,7 +233,7 @@ class AxolotlTrainer(Trainer):
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
                 )
             )
-        LOG.warning("SKIPPING 12.000 STEPS, REMOVE THIS")
+        # LOG.warning("SKIPPING 12.000 STEPS, REMOVE THIS")
         # from accelerate import skip_first_batches
 
         return super().get_train_dataloader()
