@@ -233,13 +233,13 @@ class AxolotlTrainer(Trainer):
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
                 )
             )
-        # LOG.warning("SKIPPING 12.000 STEPS, REMOVE THIS")
-        # from accelerate import skip_first_batches
+        LOG.warning("SKIPPING 4000 STEPS, REMOVE THIS")
+        from accelerate import skip_first_batches
 
-        return super().get_train_dataloader()
-        # dataloader = super().get_train_dataloader()
-        # 22k fuer 2750er checkpoint
-        # return skip_first_batches(dataloader, 22000)
+        # return super().get_train_dataloader()
+        dataloader = super().get_train_dataloader()
+        # 4k fuer 500erer checkpoint
+        return skip_first_batches(dataloader, 4000)
 
     def get_eval_dataloader(
         self, eval_dataset: Optional[Dataset] = None
