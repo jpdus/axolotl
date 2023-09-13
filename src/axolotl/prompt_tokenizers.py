@@ -410,8 +410,10 @@ class ShareGPTPromptTokenizingStrategy(PromptTokenizingStrategy):
                     pad_token_id=self.tokenizer.pad_token_id,
                 )
             return result
-        except (KeyError, AssertionError, IndexError) as err:
-            raise InvalidDataException(str(err)) from err
+        except (KeyError, AssertionError, IndexError):
+            LOG.warning("Error tokenizing prompt: %s", prompt)
+            result, current_len = tokenize_prompt_default()
+            return result
 
     def _tokenize(self, prompt, add_eos_token=True, strip_bos_token=False):
         result = self.tokenizer(
