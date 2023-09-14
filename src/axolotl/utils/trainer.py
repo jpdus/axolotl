@@ -36,6 +36,7 @@ from axolotl.utils.callbacks import (
 from axolotl.utils.collators import DataCollatorForSeq2Seq
 from axolotl.utils.dataloader import MultipackDistributedDataloader
 from axolotl.utils.distributed import is_main_process, zero_first
+from axolotl.utils.models import load_model
 from axolotl.utils.schedulers import get_cosine_schedule_with_quadratic_warmup
 
 LOG = logging.getLogger("axolotl")
@@ -499,7 +500,9 @@ def setup_fsdp_envs(cfg):
         ] = cfg.fsdp_config.fsdp_transformer_layer_cls_to_wrap
 
 
-def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_steps):
+def setup_trainer(
+    cfg, train_dataset, eval_dataset, tokenizer, total_num_steps, inference
+):
     if cfg.fsdp:
         setup_fsdp_envs(cfg)
     elif cfg.deepspeed:
@@ -665,6 +668,11 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
         **training_arguments_kwargs,
     )
 
+    # Load the model and tokenizer after instantiation of TrainingArgs
+    # see https://github.com/huggingface/transformers/issues/26157#issuecomment-1718847367
+    LOG.info("loading model and (optionally) peft_config...")
+    model, peft_config = load_model(cfg, tokenizer, inference=inference)
+
     trainer_kwargs = {}
 
     if cfg.optimizer == "adamw_anyprecision":
@@ -755,4 +763,4 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
         )
         trainer.add_callback(early_stop_cb)
 
-    return trainer
+    return trainer, model, peft_config
