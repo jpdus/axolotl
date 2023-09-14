@@ -42,8 +42,8 @@ learning_rate: 0.0002
 
 train_on_inputs: false
 group_by_length: false
-bf16: true
-fp16: false
+bf16: false
+fp16: true
 tf32: false
 
 gradient_checkpointing: true
@@ -63,7 +63,12 @@ debug:
 deepspeed:
 weight_decay: 0.0
 fsdp:
+  - full_shard
+  - auto_wrap
 fsdp_config:
+  fsdp_offload_params: true
+  fsdp_state_dict_type: FULL_STATE_DICT
+  fsdp_transformer_layer_cls_to_wrap: LlamaDecoderLayer
 special_tokens:
   bos_token: "<s>"
   eos_token: "</s>"
