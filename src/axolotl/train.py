@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Optional
 
 import torch
-from accelerate import Accelerator
 
 # add src to the pythonpath so we don't need to pip install this
 from datasets import Dataset
@@ -47,7 +46,6 @@ def train(
     dataset_meta: TrainDatasetMeta,
 ):
     # load the tokenizer first
-    accelerator = Accelerator()  # type: ignore
     LOG.info(f"loading tokenizer... {cfg.tokenizer_config or cfg.base_model_config}")
     tokenizer = load_tokenizer(cfg)
 
