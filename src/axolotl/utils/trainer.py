@@ -514,6 +514,7 @@ def setup_fsdp_envs(cfg):
         os.environ["FSDP_FORWARD_PREFETCH"] = "true"
     if cfg.fsdp_config.fsdp_use_orig_params:
         os.environ["FSDP_USE_ORIG_PARAMS"] = "true"
+    LOG.warning("SETUP FSDP ENV VARS: %s", os.environ)
 
 
 def setup_trainer(
