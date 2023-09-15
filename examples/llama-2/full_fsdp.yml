@@ -15,7 +15,7 @@ dataset_prepared_path: last_run_prepared
 val_set_size: 0.01
 output_dir: ./model-out
 
-sequence_len: 4096
+sequence_len: 2048
 sample_packing: false
 pad_to_sequence_len: true
 
