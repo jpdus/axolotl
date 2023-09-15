@@ -502,17 +502,17 @@ def setup_fsdp_envs(cfg):
         os.environ["FSDP_SHARDING_STRATEGY"] = str(
             cfg.fsdp_config.fsdp_sharding_strategy
         )
-    if cfg.fsdp_config.fsdp_sharding_strategy:
+    if cfg.fsdp_config.fsdp_min_num_params:
         os.environ["FSDP_MIN_NUM_PARAMS"] = cfg.fsdp_config.fsdp_min_num_params
-    if cfg.fsdp_config.fsdp_sharding_strategy:
-        os.environ["FSDP_AUTO_WRAP_POLICY"] = cfg.fsdp_config.fsdp_auto_wrap_polocy
-    if cfg.fsdp_config.fsdp_sharding_strategy:
+    if cfg.fsdp_config.fsdp_auto_wrap_policy:
+        os.environ["FSDP_AUTO_WRAP_POLICY"] = cfg.fsdp_config.fsdp_auto_wrap_policy
+    if cfg.fsdp_config.fsdp_backward_prefetch_policy:
         os.environ[
             "FSDP_BACKWARD_PREFETCH"
         ] = cfg.fsdp_config.fsdp_backward_prefetch_policy
-    if cfg.fsdp_config.fsdp_sharding_strategy:
+    if cfg.fsdp_config.fsdp_forward_prefetch:
         os.environ["FSDP_FORWARD_PREFETCH"] = cfg.fsdp_config.fsdp_forward_prefetch
-    if cfg.fsdp_config.fsdp_sharding_strategy:
+    if cfg.fsdp_config.fsdp_use_orig_params:
         os.environ["FSDP_USE_ORIG_PARAMS"] = cfg.fsdp_config.fsdp_use_orig_params
 
 
