@@ -511,9 +511,9 @@ def setup_fsdp_envs(cfg):
             "FSDP_BACKWARD_PREFETCH"
         ] = cfg.fsdp_config.fsdp_backward_prefetch_policy
     if cfg.fsdp_config.fsdp_forward_prefetch:
-        os.environ["FSDP_FORWARD_PREFETCH"] = cfg.fsdp_config.fsdp_forward_prefetch
+        os.environ["FSDP_FORWARD_PREFETCH"] = "true"
     if cfg.fsdp_config.fsdp_use_orig_params:
-        os.environ["FSDP_USE_ORIG_PARAMS"] = cfg.fsdp_config.fsdp_use_orig_params
+        os.environ["FSDP_USE_ORIG_PARAMS"] = "true"
 
 
 def setup_trainer(
