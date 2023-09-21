@@ -658,6 +658,9 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
     if cfg.ddp_broadcast_buffers is not None:
         training_arguments_kwargs["ddp_broadcast_buffers"] = cfg.ddp_broadcast_buffers
 
+    training_arguments_kwargs["ignore_data_skip"] = True
+    LOG.warning("ignore_data_skip is set to True")
+
     training_args = AxolotlTrainingArguments(  # pylint: disable=unexpected-keyword-arg
         max_steps=total_num_steps if cfg.max_steps else -1,
         max_seq_length=cfg.sequence_len,
